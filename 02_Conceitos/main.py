@@ -1,4 +1,4 @@
-from typing import Optional, Any
+from typing import Optional, Any, List
 
 from fastapi import Depends
 from fastapi import FastAPI
@@ -12,6 +12,7 @@ from fastapi import status
 from time import sleep
 
 from models import Curso
+from models import cursos
 
 
 def fake_db():
@@ -23,31 +24,36 @@ def fake_db():
         sleep(1)
 
 
-app = FastAPI()
-
-cursos = {
-    1: {
-        "titulo": "Programação para Leigos", 
-        "aulas": 112, 
-        "horas": 58
-    },
-    2: {
-        "titulo": "Algoritmos e Lógica de Programação", 
-        "aulas": 87, 
-        "horas": 67
-    }
-}
+app = FastAPI(
+    title="API de Cursos da Geek University",
+    description="Uma API para estudo do FastAPI",
+    version="0.0.1",
+)
 
 
-@app.get("/cursos")
+@app.get(
+    "/cursos",
+    description="Retorna todos os cursos ou uma lista vazia",
+    summary="Retorna todos os cursos",
+    response_model=List[Curso],
+    response_description="Cursos encontrados com sucesso",
+)
 async def get_cursos(db: Any = Depends(fake_db)):
     return cursos
 
 
-@app.get("/cursos/{curso_id}")
+@app.get(
+    "/cursos/{curso_id}",
+    description="Retorna um curso dado um ID",
+    summary="Retorna um curso",
+    response_model=Curso,
+    response_description="Curso encontrado com sucesso",
+)
 async def get_curso(
-    curso_id: int = Path(title="ID do curso", description="Deve ser entre 1 e 2", gt=0, lt=3), 
-    db: Any = Depends(fake_db)
+    curso_id: int = Path(
+        title="ID do curso", description="Deve ser entre 1 e 2", gt=0, lt=3
+    ),
+    db: Any = Depends(fake_db),
 ):
     try:
         curso = cursos[curso_id]
@@ -59,15 +65,29 @@ async def get_curso(
         )
 
 
-@app.post("/cursos", status_code=status.HTTP_201_CREATED)
-async def post_curso(curso: Curso, db: Any = Depends(fake_db)):
-    next_id: int = len(cursos) + 1        
-    cursos[next_id] = curso
+@app.post(
+    "/cursos",
+    status_code=status.HTTP_201_CREATED,
+    description="Cria um curso",
+    summary="Cria um curso",
+    response_model=Curso,
+    response_description="Curso criado com sucesso",
+)
+async def post_curso(curso: Curso):
+    next_id: int = len(cursos) + 1
+    curso.id = next_id
+    cursos.append(curso)
     del curso.id
     return curso
 
 
-@app.put("/cursos/{curso_id}")
+@app.put(
+    "/cursos/{curso_id}",
+    description="Atualiza um curso dado um ID",
+    summary="Atualiza um curso",
+    response_model=Curso,
+    response_description="Curso atualizado com sucesso",
+)
 async def put_curso(curso_id: int, curso: Curso, db: Any = Depends(fake_db)):
     if curso_id in cursos:
         cursos[curso_id] = curso
@@ -75,24 +95,36 @@ async def put_curso(curso_id: int, curso: Curso, db: Any = Depends(fake_db)):
         return curso
     else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Curso com ID {curso_id} não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Curso com ID {curso_id} não encontrado",
         )
 
 
-@app.delete("/cursos/{curso_id}")
+@app.delete(
+    "/cursos/{curso_id}",
+    description="Deleta um curso dado um ID",
+    summary="Deleta um curso",
+    response_model=Optional[None],
+    response_description="Curso deletado com sucesso",
+)
 async def delete_curso(curso_id: int, db: Any = Depends(fake_db)):
     if curso_id in cursos:
         del cursos[curso_id]
         return Response(status_code=status.HTTP_204_NO_CONTENT)
     else:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"Curso com ID {curso_id} não encontrado"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Curso com ID {curso_id} não encontrado",
         )
 
 
-@app.get("/calculadora")
+@app.get(
+    "/calculadora",
+    description="Calcula a soma de até três números",
+    summary="Calcula a soma",
+    response_model=int,
+    response_description="Soma calculada com sucesso",
+)
 async def calcular(
     a: int = Query(default=None, gt=5),
     b: int = Query(default=None, gt=10),
