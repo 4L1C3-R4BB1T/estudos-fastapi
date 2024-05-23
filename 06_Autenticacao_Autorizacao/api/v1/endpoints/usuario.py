@@ -1,9 +1,10 @@
-from typing import List, Optional, Any
+from typing import List
 
 from fastapi import APIRouter, status, Depends, HTTPException, Response
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
@@ -39,9 +40,15 @@ async def post_usuario(usuario: UsuarioSchemaCreate, db: AsyncSession = Depends(
         admin=usuario.admin,
     )
     async with db as session:
-        session.add(novo_usuario)
-        await session.commit()
-        return novo_usuario
+        try:
+            session.add(novo_usuario)
+            await session.commit()
+            return novo_usuario
+        except IntegrityError:
+            raise HTTPException(
+                detail="Email já cadastrado",
+                status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            )
 
 
 # GET usuarios

@@ -11,7 +11,7 @@ class UsuarioModel(settings.DBBaseModel):
     nome = Column(String(256), nullable=True)
     sobrenome = Column(String(256), nullable=True)
     email = Column(String(256), index=True, nullable=False, unique=True)
-    email = Column(String(256), nullable=False)
+    senha = Column(String(256), nullable=False)
     admin = Column(Boolean, default=False)
     artigos = relationship(
         "ArtigoModel",
